@@ -1,5 +1,8 @@
 package ru.alishev.springcourse.dao;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import ru.alishev.springcourse.models.Person;
 
@@ -9,6 +12,14 @@ import java.util.List;
 
 @Component
 public class PersonDAO {
+
+    private final JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    public PersonDAO(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
     private static int PEOPLE_COUNT;
 
     private static final String URL = "jdbc:postgresql://localhost5432/first_db";
@@ -40,6 +51,10 @@ public class PersonDAO {
         people.add(new Person(++PEOPLE_COUNT, "Katy", 34, "katy@gmail.com"));
     }
 
+    public List<Person> index2() {
+        return jdbcTemplate.query("SELECT * FROM Person", new BeanPropertyRowMapper<>(Person.class));
+    }
+
     public List<Person> index() throws SQLException {
 //        return people;
         List<Person> personList = new ArrayList<>();
@@ -61,6 +76,11 @@ public class PersonDAO {
 
     }
 
+    public Person show2(int id) {
+        return jdbcTemplate.query("SELECT * FROM Person where id=?", new Object[]{}, new BeanPropertyRowMapper<>(Person.class))
+                .stream().findAny().orElse(null);
+    }
+
     public Person show(int id) throws SQLException {
         Person person = null;
 
@@ -75,6 +95,10 @@ public class PersonDAO {
 
 //        return people.stream().filter(person -> person.getId() == id).findAny().orElse(null);
         return person;
+    }
+
+    public void save2(Person person) {
+        jdbcTemplate.update("INSERT INTO Person VALUES(1,?,?,?)", person.getName(), person.getAge(), person.getEmail());
     }
 
     public void save(Person person) throws SQLException {
@@ -94,6 +118,11 @@ public class PersonDAO {
         statement.executeUpdate(SQL);
     }
 
+    public void update2(int id, Person updatedPerson) {
+        jdbcTemplate.update("UPDATE Person SET name=?, age=?, email=? WHERE id=?",
+                updatedPerson.getName(), updatedPerson.getAge(), updatedPerson.getEmail(), id);
+    }
+
     public void update(int id, Person updatedPerson) throws SQLException {
         PreparedStatement preparedStatement
                 = connection.prepareStatement("UPDATE Person SET name=?, age=?, email=? WHERE id=?");
@@ -107,6 +136,10 @@ public class PersonDAO {
         personToBeUpdated.setAge(updatedPerson.getAge());
         personToBeUpdated.setEmail(updatedPerson.getEmail());*/
 
+    }
+
+    public void delete2(int id) {
+        jdbcTemplate.update("DELETE FROM Person WHERE id=?", id);
     }
 
     public void delete(int id) throws SQLException {
